@@ -18,7 +18,7 @@ private:
     std::string input;
     size_t pos;
     std::map<std::string, TokenType> reservedWords = {
-        {"if", RESERVED}, {"else", RESERVED}, {"while", RESERVED}, {"return", RESERVED}
+        {"if", RESERVED}, {"else", RESERVED}, {"while", RESERVED}, {"return", RESERVED}, {"def", RESERVED}, {"import", RESERVED}, {"from", RESERVED}
     };
 
     void skipWhitespace() {
@@ -45,21 +45,37 @@ private:
         char quote = input[pos];
         size_t start = pos;
         pos++;
-        while (pos < input.length() && input[pos] != quote) {
+        bool escaped = false;
+
+        while (pos < input.length()) {
+            char current = input[pos];
+
+            if (current == '\\' && !escaped) {
+                escaped = true;
+                pos++;
+                continue;
+            }
+
+            if (current == quote && !escaped) {
+                pos++;
+                break;
+            }
+
+            escaped = false;
             pos++;
         }
-        pos++; // Move past the closing quote
+
         return { input.substr(start, pos - start), STRING };
     }
 
     Token recognizeIdentifier() {
         size_t start = pos;
-        while (pos < input.length() && (isalnum(input[pos]) || input[pos] == '_')) {
+        while (pos < input.length() && (isalnum(input[pos]) || input[pos] == '_' || input[pos] == '.')) {
             pos++;
         }
         std::string lexeme = input.substr(start, pos - start);
         if (reservedWords.count(lexeme)) {
-            return { lexeme, RESERVED };
+            return { lexeme, reservedWords[lexeme] };
         }
         return { lexeme, IDENTIFIER };
     }
@@ -122,12 +138,44 @@ std::string tokenTypeToString(TokenType type) {
 
 int main() {
     std::string code = R"(
-        def func(a,b):
-            # Some comment from me
-            if a > b:
-                return a
-            else:
-                return b
+    import webbrowser
+    import telebot
+
+    TOKEN = '7012456183:AAHqzxkqLGx2qyZvnRxpTSHlMvQTPwE3Hb8'
+
+    bot = telebot.TeleBot(TOKEN)
+
+    # Message Handlers
+    # Commands
+    @bot.message_handler(commands=['start'])
+    def start(message):
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup.add(telebot.types.InlineKeyboardButton(text='Зв\'язатись з оператором', callback_data='operator'))
+        markup.add(telebot.types.InlineKeyboardButton(text='Перейти на сайт', url='https://www.hive.report/'))
+        bot.send_message(message.chat.id, f'<em>Вітаю, {message.from_user.first_name}!</em>\nБудь ласка оберіть тип Вашого звернення', parse_mode='html', reply_markup=markup)
+
+    @bot.message_handler(commands=['site'])
+    def website(message):
+        bot.send_message(message.chat.id, 'https://www.hive.report')
+        webbrowser.open('https://www.hive.report')
+
+    # Files
+    @bot.message_handler(content_types=['photo'])
+    def get_photo(message):
+        bot.send_message(message.chat.id, 'Дякую за знімок!')
+
+    # User Message
+    @bot.message_handler()
+    def hello(message):
+        if message.text.lower() == 'привіт':
+            bot.send_message(message.chat.id, f'Привіт, {message.from_user.first_name}!')
+
+        elif message.text.lower() == 'пока':
+            bot.send_message(message.chat.id, f'Гарного дня, {message.from_user.first_name}!')
+
+
+    print("Bot is Started.")
+    bot.infinity_polling()
     )";
 
     Lexer lexer(code);
