@@ -6,5 +6,3 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(PythonLexer main.cpp)
-
-target_compile_options(PythonLexer PRIVATE -Wall -Wextra -pedantic -O2)
