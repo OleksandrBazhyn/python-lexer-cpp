@@ -105,6 +105,21 @@ public:
     }
 };
 
+std::string tokenTypeToString(TokenType type) {
+    switch (type) {
+        case NUMBER: return "NUMBER";
+        case STRING: return "STRING";
+        case IDENTIFIER: return "IDENTIFIER";
+        case COMMENT: return "COMMENT";
+        case RESERVED: return "RESERVED";
+        case OPERATOR: return "OPERATOR";
+        case PUNCTUATION: return "PUNCTUATION";
+        case ERROR: return "ERROR";
+        case END: return "END";
+        default: return "UNKNOWN";
+    }
+}
+
 int main() {
     std::string code = R"(
         def func(a,b):
@@ -118,8 +133,8 @@ int main() {
     Lexer lexer(code);
     Token token;
     while ((token = lexer.getNextToken()).type != END) {
-        std::cout << "<" << token.lexeme << ", " << token.type << ">" << std::endl;
-    }
+    	std::cout << "<" << token.lexeme << ", " << tokenTypeToString(token.type) << ">" << std::endl;
+	}
 
     std::cin;
 

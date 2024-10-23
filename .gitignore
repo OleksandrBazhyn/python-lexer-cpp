@@ -376,3 +376,6 @@ Makefile
 
 # Ignore build
 /build/
+
+# Visual Studio Code cache
+.vscode/
