@@ -117,7 +117,14 @@ public:
         if (ispunct(current)) {
             return recognizeOperatorOrPunctuation();
         }
-        return { std::string(1, current), ERROR };
+
+        Token errorToken = { std::string(1, current), ERROR };
+        pos++;
+        return errorToken;
+    }
+
+    size_t getPosition() const {
+        return pos;
     }
 };
 
@@ -138,7 +145,7 @@ std::string tokenTypeToString(TokenType type) {
 
 int main() {
     std::string code = R"(
-    import webbrowser
+    import — webbrowser
     import telebot
 
     TOKEN = '7012456183:AAHqzxkqLGx2qyZvnRxpTSHlMvQTPwE3Hb8'
@@ -148,7 +155,7 @@ int main() {
     # Message Handlers
     # Commands
     @bot.message_handler(commands=['start'])
-    def start(message):
+    def start(message): 
         markup = telebot.types.InlineKeyboardMarkup()
         markup.add(telebot.types.InlineKeyboardButton(text='Зв\'язатись з оператором', callback_data='operator'))
         markup.add(telebot.types.InlineKeyboardButton(text='Перейти на сайт', url='https://www.hive.report/'))
@@ -181,8 +188,12 @@ int main() {
     Lexer lexer(code);
     Token token;
     while ((token = lexer.getNextToken()).type != END) {
-    	std::cout << "<" << token.lexeme << ", " << tokenTypeToString(token.type) << ">" << std::endl;
-	}
+        if (token.type == ERROR) {
+            std::cerr << "Error: Unrecognized token '" << token.lexeme << "' at position " << lexer.getPosition() << std::endl;
+        } else {
+            std::cout << "<" << token.lexeme << ", " << token.type << ">" << std::endl;
+        }
+    }
 
     std::cin;
 
