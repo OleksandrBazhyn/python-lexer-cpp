@@ -191,7 +191,7 @@ int main() {
         if (token.type == ERROR) {
             std::cerr << "Error: Unrecognized token '" << token.lexeme << "' at position " << lexer.getPosition() << std::endl;
         } else {
-            std::cout << "<" << token.lexeme << ", " << token.type << ">" << std::endl;
+            std::cout << "<" << token.lexeme << ", " << tokenTypeToString(token.type) << ">" << std::endl;
         }
     }
 
