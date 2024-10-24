@@ -3,6 +3,8 @@
 #include <cctype>
 #include <map>
 #include <vector>
+#include <fstream>
+#include <filesystem>
 
 enum TokenType {
     NUMBER, STRING, IDENTIFIER, COMMENT, RESERVED, OPERATOR, PUNCTUATION, ERROR, END
@@ -143,59 +145,73 @@ std::string tokenTypeToString(TokenType type) {
     }
 }
 
-int main() {
-    std::string code = R"(
-    import — webbrowser
-    import telebot
+std::string readPythonFile(const std::string& filePath) {
+    std::string code;
+    std::ifstream file(filePath);
+    if (!file.is_open()){
+        std::cerr << "Error: Could not open the file " << filePath << std::endl;
+        return "";
+    }
 
-    TOKEN = '7012456183:AAHqzxkqLGx2qyZvnRxpTSHlMvQTPwE3Hb8'
+    std::string line;
+    while (std::getline(file, line)) {
+        code += line + "\n";
+    }
+    
+    file.close();
+    return code;
+}
 
-    bot = telebot.TeleBot(TOKEN)
+void writeToFile(const std::string& filename, const std::string& content) {
+    std::filesystem::path dir = std::filesystem::path(filename).parent_path();
 
-    # Message Handlers
-    # Commands
-    @bot.message_handler(commands=['start'])
-    def start(message): 
-        markup = telebot.types.InlineKeyboardMarkup()
-        markup.add(telebot.types.InlineKeyboardButton(text='Зв\'язатись з оператором', callback_data='operator'))
-        markup.add(telebot.types.InlineKeyboardButton(text='Перейти на сайт', url='https://www.hive.report/'))
-        bot.send_message(message.chat.id, f'<em>Вітаю, {message.from_user.first_name}!</em>\nБудь ласка оберіть тип Вашого звернення', parse_mode='html', reply_markup=markup)
+    if (!std::filesystem::exists(dir)) {
+        std::filesystem::create_directories(dir);
+    }
 
-    @bot.message_handler(commands=['site'])
-    def website(message):
-        bot.send_message(message.chat.id, 'https://www.hive.report')
-        webbrowser.open('https://www.hive.report')
+    std::ofstream outFile(filename, std::ios::out);
+    if (!outFile) {
+        std::cerr << "Error: Could not open or create the file " << filename << " for writing." << std::endl;
+        return;
+    }
+    outFile << content;
+    outFile.close();
+}
 
-    # Files
-    @bot.message_handler(content_types=['photo'])
-    def get_photo(message):
-        bot.send_message(message.chat.id, 'Дякую за знімок!')
-
-    # User Message
-    @bot.message_handler()
-    def hello(message):
-        if message.text.lower() == 'привіт':
-            bot.send_message(message.chat.id, f'Привіт, {message.from_user.first_name}!')
-
-        elif message.text.lower() == 'пока':
-            bot.send_message(message.chat.id, f'Гарного дня, {message.from_user.first_name}!')
-
-
-    print("Bot is Started.")
-    bot.infinity_polling()
-    )";
-
+void processCode(const std::string& code) {
     Lexer lexer(code);
     Token token;
+    std::string result;
     while ((token = lexer.getNextToken()).type != END) {
         if (token.type == ERROR) {
             std::cerr << "Error: Unrecognized token '" << token.lexeme << "' at position " << lexer.getPosition() << std::endl;
+            result += "Error: Unrecognized token '" + token.lexeme + "' at position " + std::to_string(lexer.getPosition()) + "\n";
         } else {
-            std::cout << "<" << token.lexeme << ", " << tokenTypeToString(token.type) << ">" << std::endl;
+            std::string output = "<" + token.lexeme + ", " + tokenTypeToString(token.type) + ">\n";
+            std::cout << output;
+            result += output;
         }
     }
 
-    std::cin;
+    writeToFile("../result/output.txt", result);
+}
+
+int main(int argc, char* argv[]) {
+    std::string filePath;
+
+    if (argc < 2) {
+        filePath = "../python-code-for-analysis/script.py";
+    } else {
+        filePath = argv[1];
+    }
+
+    std::string code = readPythonFile(filePath);
+
+    if (!code.empty()) {
+        processCode(code);
+    } else {
+        std::cerr << "Error: No code to process." << std::endl;
+    }
 
     return 0;
 }

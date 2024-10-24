@@ -379,3 +379,6 @@ Makefile
 
 # Visual Studio Code cache
 .vscode/
+
+# Result Directory
+/result/
