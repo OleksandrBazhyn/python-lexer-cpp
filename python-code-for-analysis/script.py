@@ -36,3 +36,8 @@ def hello(message):
 
 print("Bot is Started.")
 bot.infinity_polling()
+
+ii = 2.11
+x = 0x111ab
+a = 17
+o = 0x11abj

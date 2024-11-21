@@ -31,15 +31,52 @@ private:
 
     Token recognizeNumber() {
         size_t start = pos;
-        while (pos < input.length() && isxdigit(input[pos])) {
+
+        // Перевіряємо префікс для 16-ткової системи
+        if (input[pos] == '0' && pos + 1 < input.length() && tolower(input[pos + 1]) == 'x') {
+            pos += 2; // Пропускаємо '0x'
+            bool hasHexDigits = false;
+
+            // Перевіряємо, що після префікса є лише шістнадцяткові цифри
+            while (pos < input.length() && isxdigit(input[pos])) {
+                hasHexDigits = true;
+                pos++;
+            }
+
+            // Якщо після '0x' не було цифр або зустріли недопустимий символ
+            if (!hasHexDigits || (pos < input.length() && isalnum(input[pos]))) {
+                // Переміщуємо позицію до кінця лексеми, щоб пропустити всю помилкову частину
+                while (pos < input.length() && isalnum(input[pos])) {
+                    pos++;
+                }
+                return { input.substr(start, pos - start), ERROR };
+            }
+
+            return { input.substr(start, pos - start), NUMBER };
+        }
+
+        // Якщо це звичайне десяткове число
+        while (pos < input.length() && isdigit(input[pos])) {
             pos++;
         }
+
+        // Перевіряємо на дробову частину
         if (pos < input.length() && input[pos] == '.') {
             pos++;
             while (pos < input.length() && isdigit(input[pos])) {
                 pos++;
             }
         }
+
+        // Перевіряємо, чи після числа немає недійсного символу
+        if (pos < input.length() && isalnum(input[pos])) {
+            // Пропускаємо залишкові недійсні символи
+            while (pos < input.length() && isalnum(input[pos])) {
+                pos++;
+            }
+            return { input.substr(start, pos - start), ERROR };
+        }
+
         return { input.substr(start, pos - start), NUMBER };
     }
 
